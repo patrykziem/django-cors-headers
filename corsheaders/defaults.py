@@ -1,37 +1,30 @@
 from django.conf import settings
 
-default_headers = (
+CORS_DEFAULT_ALLOW_HEADERS = getattr(settings, 'CORS_DEFAULT_ALLOW_HEADERS', (
     'x-requested-with',
     'content-type',
     'accept',
     'origin',
     'authorization',
     'x-csrftoken',
-)
-CORS_ALLOW_HEADERS = getattr(settings, 'CORS_ALLOW_HEADERS', default_headers)
+))
 
-default_methods = (
+CORS_DEFAULT_ALLOW_METHODS = getattr(settings, 'CORS_DEFAULT_ALLOW_METHODS', (
     'GET',
     'POST',
     'PUT',
     'PATCH',
     'DELETE',
     'OPTIONS',
-)
-CORS_ALLOW_METHODS = getattr(settings, 'CORS_ALLOW_METHODS', default_methods)
+))
 
-CORS_ALLOW_CREDENTIALS = getattr(settings, 'CORS_ALLOW_CREDENTIALS', False)
+CORS_DEFAULT_PREFLIGHT_MAX_AGE = getattr(settings, 'CORS_DEFAULT_PREFLIGHT_MAX_AGE', 86400)
 
-CORS_PREFLIGHT_MAX_AGE = getattr(settings, 'CORS_PREFLIGHT_MAX_AGE', 86400)
+CORS_DEFAULT_EXPOSE_HEADERS = getattr(settings, 'CORS_DEFAULT_EXPOSE_HEADERS', ())
 
-CORS_ORIGIN_ALLOW_ALL = getattr(settings, 'CORS_ORIGIN_ALLOW_ALL', False)
-
-CORS_ORIGIN_WHITELIST = getattr(settings, 'CORS_ORIGIN_WHITELIST', ())
-
-CORS_ORIGIN_REGEX_WHITELIST = getattr(settings, 'CORS_ORIGIN_REGEX_WHITELIST', ())
-
-CORS_EXPOSE_HEADERS = getattr(settings, 'CORS_EXPOSE_HEADERS', ())
-
-CORS_URLS_REGEX = getattr(settings, 'CORS_URLS_REGEX', '^.*$')
-
-CORS_MODEL = getattr(settings, 'CORS_MODEL', None)
+CORS_PROFILES = getattr(settings, 'CORS_PROFILES', [
+    {
+        'allow_all': True,
+        'urls': r'^.+$',
+    }
+])

@@ -6,8 +6,6 @@ except ImportError:
     from urllib.parse import urlparse
 
 from corsheaders import defaults as settings
-from django.db.models.loading import get_model
-
 
 ACCESS_CONTROL_ALLOW_ORIGIN = 'Access-Control-Allow-Origin'
 ACCESS_CONTROL_EXPOSE_HEADERS = 'Access-Control-Expose-Headers'
@@ -38,41 +36,50 @@ class CorsMiddleware(object):
             Add the respective CORS headers
         '''
         origin = request.META.get('HTTP_ORIGIN')
-        if self.is_enabled(request) and origin:
-            # todo: check hostname from db instead
-            url = urlparse(origin)
 
-            if settings.CORS_MODEL is not None:
-                model = get_model(*settings.CORS_MODEL.split('.'))
-                if model.objects.filter(cors=url.netloc).exists():
-                    response[ACCESS_CONTROL_ALLOW_ORIGIN] = origin
+        url = urlparse(origin)
+        for profile in settings.CORS_PROFILES:
+            allow_all = profile.get('allow_all', True)
+            allow_credentials = profile.get('allow_credentials', False)
+            origin_whitelist = profile.get('origin_whitelist', ())
+            expose_headers = profile.get(
+                'expose_headers', settings.CORS_DEFAULT_EXPOSE_HEADERS)
+            allow_headers = profile.get(
+                'allow_headers', settings.CORS_DEFAULT_ALLOW_HEADERS)
+            allow_methods = profile.get(
+                'allow_methods', settings.CORS_DEFAULT_ALLOW_METHODS)
+            preflight_max_age = profile.get(
+                'preflight_max_age', settings.CORS_DEFAULT_PREFLIGHT_MAX_AGE)
 
-            if not settings.CORS_ORIGIN_ALLOW_ALL and self.origin_not_found_in_white_lists(origin, url):
-                return response
+            if re.match(profile['urls'], request.path):
+                if not allow_all and not url.netloc in origin_whitelist:
+                    break
 
-            response[ACCESS_CONTROL_ALLOW_ORIGIN] = "*" if (settings.CORS_ORIGIN_ALLOW_ALL and not settings.CORS_ALLOW_CREDENTIALS) else origin
+                response[ACCESS_CONTROL_ALLOW_ORIGIN] = origin
+                if allow_all and not allow_credentials:
+                    response[ACCESS_CONTROL_ALLOW_ORIGIN] = "*"
 
-            if len(settings.CORS_EXPOSE_HEADERS):
-                response[ACCESS_CONTROL_EXPOSE_HEADERS] = ', '.join(settings.CORS_EXPOSE_HEADERS)
+                if len(expose_headers):
+                    response[ACCESS_CONTROL_EXPOSE_HEADERS] = ', '.join(expose_headers)
 
-            if settings.CORS_ALLOW_CREDENTIALS:
-                response[ACCESS_CONTROL_ALLOW_CREDENTIALS] = 'true'
+                if allow_credentials:
+                    response[ACCESS_CONTROL_ALLOW_CREDENTIALS] = 'true'
 
-            if request.method == 'OPTIONS':
-                response[ACCESS_CONTROL_ALLOW_HEADERS] = ', '.join(settings.CORS_ALLOW_HEADERS)
-                response[ACCESS_CONTROL_ALLOW_METHODS] = ', '.join(settings.CORS_ALLOW_METHODS)
-                if settings.CORS_PREFLIGHT_MAX_AGE:
-                    response[ACCESS_CONTROL_MAX_AGE] = settings.CORS_PREFLIGHT_MAX_AGE
+                if request.method == 'OPTIONS':
+                    allow_headers = ', '.join(allow_headers)
+                    response[ACCESS_CONTROL_ALLOW_HEADERS] = allow_headers
+                    allow_methods = ', '.join(allow_methods)
+                    response[ACCESS_CONTROL_ALLOW_METHODS] = allow_methods
+                    if preflight_max_age:
+                        response[ACCESS_CONTROL_MAX_AGE] = preflight_max_age
+
+                break
 
         return response
 
-    def origin_not_found_in_white_lists(self, origin, url):
-        return url.netloc not in settings.CORS_ORIGIN_WHITELIST and not self.regex_domain_match(origin)
-
-    def regex_domain_match(self, origin):
-        for domain_pattern in settings.CORS_ORIGIN_REGEX_WHITELIST:
-            if re.match(domain_pattern, origin):
-                return origin
-
     def is_enabled(self, request):
-        return re.match(settings.CORS_URLS_REGEX, request.path)
+        for profile in settings.CORS_PROFILES:
+            if re.match(profile['urls'], request.path):
+                return True
+
+        return False
