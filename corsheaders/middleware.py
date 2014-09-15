@@ -37,43 +37,44 @@ class CorsMiddleware(object):
         '''
         origin = request.META.get('HTTP_ORIGIN')
 
-        url = urlparse(origin)
-        for profile in settings.CORS_PROFILES:
-            allow_all = profile.get('allow_all', True)
-            allow_credentials = profile.get('allow_credentials', False)
-            origin_whitelist = profile.get('origin_whitelist', ())
-            expose_headers = profile.get(
-                'expose_headers', settings.CORS_DEFAULT_EXPOSE_HEADERS)
-            allow_headers = profile.get(
-                'allow_headers', settings.CORS_DEFAULT_ALLOW_HEADERS)
-            allow_methods = profile.get(
-                'allow_methods', settings.CORS_DEFAULT_ALLOW_METHODS)
-            preflight_max_age = profile.get(
-                'preflight_max_age', settings.CORS_DEFAULT_PREFLIGHT_MAX_AGE)
+        if origin:
+            url = urlparse(origin)
+            for profile in settings.CORS_PROFILES:
+                allow_all = profile.get('allow_all', True)
+                allow_credentials = profile.get('allow_credentials', False)
+                origin_whitelist = profile.get('origin_whitelist', ())
+                expose_headers = profile.get(
+                    'expose_headers', settings.CORS_DEFAULT_EXPOSE_HEADERS)
+                allow_headers = profile.get(
+                    'allow_headers', settings.CORS_DEFAULT_ALLOW_HEADERS)
+                allow_methods = profile.get(
+                    'allow_methods', settings.CORS_DEFAULT_ALLOW_METHODS)
+                preflight_max_age = profile.get(
+                    'preflight_max_age', settings.CORS_DEFAULT_PREFLIGHT_MAX_AGE)
 
-            if re.match(profile['urls'], request.path):
-                if not allow_all and not url.netloc in origin_whitelist:
+                if re.match(profile['urls'], request.path):
+                    if not allow_all and not url.netloc in origin_whitelist:
+                        break
+
+                    response[ACCESS_CONTROL_ALLOW_ORIGIN] = origin
+                    if allow_all and not allow_credentials:
+                        response[ACCESS_CONTROL_ALLOW_ORIGIN] = "*"
+
+                    if len(expose_headers):
+                        response[ACCESS_CONTROL_EXPOSE_HEADERS] = ', '.join(expose_headers)
+
+                    if allow_credentials:
+                        response[ACCESS_CONTROL_ALLOW_CREDENTIALS] = 'true'
+
+                    if request.method == 'OPTIONS':
+                        allow_headers = ', '.join(allow_headers)
+                        response[ACCESS_CONTROL_ALLOW_HEADERS] = allow_headers
+                        allow_methods = ', '.join(allow_methods)
+                        response[ACCESS_CONTROL_ALLOW_METHODS] = allow_methods
+                        if preflight_max_age:
+                            response[ACCESS_CONTROL_MAX_AGE] = preflight_max_age
+
                     break
-
-                response[ACCESS_CONTROL_ALLOW_ORIGIN] = origin
-                if allow_all and not allow_credentials:
-                    response[ACCESS_CONTROL_ALLOW_ORIGIN] = "*"
-
-                if len(expose_headers):
-                    response[ACCESS_CONTROL_EXPOSE_HEADERS] = ', '.join(expose_headers)
-
-                if allow_credentials:
-                    response[ACCESS_CONTROL_ALLOW_CREDENTIALS] = 'true'
-
-                if request.method == 'OPTIONS':
-                    allow_headers = ', '.join(allow_headers)
-                    response[ACCESS_CONTROL_ALLOW_HEADERS] = allow_headers
-                    allow_methods = ', '.join(allow_methods)
-                    response[ACCESS_CONTROL_ALLOW_METHODS] = allow_methods
-                    if preflight_max_age:
-                        response[ACCESS_CONTROL_MAX_AGE] = preflight_max_age
-
-                break
 
         return response
 
