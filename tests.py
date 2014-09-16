@@ -10,7 +10,7 @@ def run_tests():
     from django.conf import settings
     settings.configure(
         INSTALLED_APPS=[
-            'corsheaders',
+            'corsprofiles',
         ],
         DATABASES={
             'default': {
@@ -19,7 +19,7 @@ def run_tests():
             },
         },
         MIDDLEWARE_CLASSES=global_settings.MIDDLEWARE_CLASSES + (
-            'corsheaders.middleware.CorsMiddleware',),
+            'corsprofiles.middleware.CorsMiddleware',),
     )
     if hasattr(django, 'setup'):
         django.setup()
@@ -27,7 +27,7 @@ def run_tests():
     from django.test.simple import DjangoTestSuiteRunner
 
     test_runner = DjangoTestSuiteRunner(verbosity=1)
-    return test_runner.run_tests(['corsheaders'])
+    return test_runner.run_tests(['corsprofiles'])
 
 
 def main():

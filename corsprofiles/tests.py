@@ -1,13 +1,13 @@
 from django.http import HttpResponse
 from django.test import TestCase
-from corsheaders.middleware import CorsMiddleware
-from corsheaders.middleware import ACCESS_CONTROL_ALLOW_ORIGIN
-from corsheaders.middleware import ACCESS_CONTROL_EXPOSE_HEADERS
-from corsheaders.middleware import ACCESS_CONTROL_ALLOW_CREDENTIALS
-from corsheaders.middleware import ACCESS_CONTROL_ALLOW_HEADERS
-from corsheaders.middleware import ACCESS_CONTROL_ALLOW_METHODS
-from corsheaders.middleware import ACCESS_CONTROL_MAX_AGE
-from corsheaders import defaults as settings
+from corsprofiles.middleware import CorsMiddleware
+from corsprofiles.middleware import ACCESS_CONTROL_ALLOW_ORIGIN
+from corsprofiles.middleware import ACCESS_CONTROL_EXPOSE_HEADERS
+from corsprofiles.middleware import ACCESS_CONTROL_ALLOW_CREDENTIALS
+from corsprofiles.middleware import ACCESS_CONTROL_ALLOW_HEADERS
+from corsprofiles.middleware import ACCESS_CONTROL_ALLOW_METHODS
+from corsprofiles.middleware import ACCESS_CONTROL_MAX_AGE
+from corsprofiles import defaults as settings
 from mock import Mock
 from mock import patch
 
@@ -60,7 +60,7 @@ class TestCorsMiddlewareProcessRequest(TestCase):
         self.assertIsNone(response)
 
 
-@patch('corsheaders.middleware.settings')
+@patch('corsprofiles.middleware.settings')
 class TestCorsMiddlewareProcessResponse(TestCase):
 
     def setUp(self):
@@ -211,14 +211,14 @@ class TestCorsMiddlewareProcessResponse(TestCase):
         self.assertEqual(processed.get(ACCESS_CONTROL_ALLOW_ORIGIN, None), None)
 
     def test_process_response_when_custom_model_enabled(self, settings):
-        from corsheaders.models import CorsModel
+        from corsprofiles.models import CorsModel
         CorsModel.objects.create(cors='foo.google.com')
         settings.CORS_ORIGIN_REGEX_WHITELIST = ()
         settings.CORS_ALLOW_CREDENTIALS = False
         settings.CORS_ORIGIN_ALLOW_ALL = False
         settings.CORS_ALLOW_METHODS = settings.default_methods
         settings.CORS_URLS_REGEX = '^.*$'
-        settings.CORS_MODEL = 'corsheaders.CorsModel'
+        settings.CORS_MODEL = 'corsprofiles.CorsModel'
         response = HttpResponse()
         request = Mock(path='/', META={'HTTP_ORIGIN': 'http://foo.google.com'})
         processed = self.middleware.process_response(request, response)

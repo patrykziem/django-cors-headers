@@ -1,4 +1,4 @@
-from corsheaders import __version__
+from corsprofiles import __version__
 from setuptools import setup
 
 setup(
@@ -8,7 +8,7 @@ setup(
     author='Otto Yiu',
     author_email='otto@live.ca',
     url='https://github.com/ottoyiu/django-cors-headers',
-    packages=['corsheaders'],
+    packages=['corsprofiles'],
     license='MIT License',
     keywords='django cors middleware rest api',
     platforms=['any'],
