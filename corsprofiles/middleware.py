@@ -52,7 +52,7 @@ class CorsMiddleware(object):
                 preflight_max_age = profile.get(
                     'preflight_max_age', settings.CORS_DEFAULT_PREFLIGHT_MAX_AGE)
 
-                if re.match(profile['urls'], request.path):
+                if self.request_matches_profile(request, profile):
                     if not allow_all and not url.netloc in origin_whitelist:
                         break
 
@@ -78,9 +78,18 @@ class CorsMiddleware(object):
 
         return response
 
+    def request_matches_profile(self, request, profile):
+        if isinstance(profile['urls'], tuple):
+            for url in profile['urls']:
+                if re.match(url, request.path):
+                    return True
+            return False
+        else:
+            return re.match(profile['urls'], request.path)
+
     def is_enabled(self, request):
         for profile in settings.CORS_PROFILES:
-            if re.match(profile['urls'], request.path):
+            if self.request_matches_profile(request, profile):
                 return True
 
         return False
